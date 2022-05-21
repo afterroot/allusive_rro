@@ -1,0 +1,26 @@
+{
+  "requests": [
+    {
+      "fileName": "pointer7566531785982733888.png",
+      "uid": "123456",
+      "timestamp": "2018-01-01T00:00:00.000Z",
+      "allusiveVersion": "19",
+      "android": "31"
+    },
+    {
+      "fileName": "pointer984880143658032583.png",
+      "uid": "123456",
+      "timestamp": "2018-01-01T00:00:00.000Z",
+      "allusiveVersion": "19",
+      "android": "31"
+    },
+    {
+      "fileName": "pointer995469354243849637.png",
+      "uid": "123456",
+      "timestamp": "2018-01-01T00:00:00.000Z",
+      "allusiveVersion": "19",
+      "android": "31"
+    }
+  ],
+  "version": "1"
+}

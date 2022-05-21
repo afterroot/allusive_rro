@@ -1,0 +1,138 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ main, dev ]
+    #    tags:
+    #      - v*
+    #      - run_ci_build
+    paths-ignore:
+      - '.idea/**'
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  build:
+    name: Android Build
+    runs-on: ubuntu-latest
+    #    env:
+    #      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    steps:
+
+      #      - uses: act10ns/slack@v1
+      #        with:
+      #          status: starting
+      #          channel: '#pointer-replacer' #TODO Create and use common channel for slack.
+      #        if: always()
+
+      - name: Check Out
+        id: check-out
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.PRIV_REPO_PAT }}
+          submodules: 'recursive'
+
+      - name: set up JDK
+        id: setup-jdk
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+
+      - name: Set up Python 3
+        id: setup-python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+
+      - run: pip install -r requirements.txt
+
+      - name: Grant execute permissions
+        id: grant-execute-permissions-for-scripts
+        run: chmod +x release/decrypt.sh release/clean.sh
+
+      - name: Decrypt Task
+        id: decrypt
+        run: ./release/decrypt.sh
+        env:
+          ENCRYPT_KEY: ${{ secrets.ENCRYPT_KEY }}
+
+      - name: Copy CI gradle.properties
+        run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
+
+      - name: Grant execute permission for gradlew
+        id: grant-execute-permissions-for-gradle
+        run: chmod +x gradlew
+
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v0'
+        with:
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0
+
+      - name: Build with Gradle
+        id: build
+        uses: gradle/gradle-build-action@v2
+        env:
+          CI: true
+          GHTOKEN: ${{ secrets.PRIV_REPO_PAT }}
+          SIGN_KEY_PW: ${{ secrets.SIGN_KEY_PW }}
+          SIGN_STORE_PW: ${{ secrets.SIGN_STORE_PW }}
+        with:
+          arguments: :app:assemble --stacktrace
+
+      - name: Build RRO Apks
+        run: python scripts/build-rros.py
+        env:
+          SIGN_KEY_PW: ${{ secrets.SIGN_KEY_PW }}
+          SIGN_STORE_PW: ${{ secrets.SIGN_STORE_PW }}
+
+      - name: Commit to allusive-repo
+        working-directory: ./repo
+        run: |
+          git config --global user.name "Sandip Vaghela"
+          git config --global user.email "12868991+thesandipv@users.noreply.github.com"
+          echo "commit to allusive-repo"
+          git commit -m "[Repo] update pointers"
+
+#      - name: Commit to allusive_rro
+#        working-directory: ./
+#        run: |
+#          git add repo
+#          echo "commit to allusive_rro"
+#          git commit -m "[Submodule] update repo"
+
+      - name: Push changes to allusive-repo
+        working-directory: ./repo
+        run: |
+          git push origin
+          
+
+#      - name: Push changes to allusive_rro
+#        uses: ad-m/github-push-action@master
+#        with:
+#          github_token: ${{ secrets.PRIV_REPO_PAT }}
+#          branch: 'main'
+#          directory: '.'
+
+      - name: Clean Task
+        if: always()
+        run: ./release/clean.sh
+
+      #      - name: Upload build reports
+      #        id: upload-reports
+      #        if: always()
+      #        uses: actions/upload-artifact@v1
+      #        with:
+      #          name: build-reports
+      #          path: app/build/reports
+
+      - uses: act10ns/slack@v1
+        if: always()
+        with:
+          status: ${{ job.status }}
+          steps: ${{ toJson(steps) }}
+          channel: '#allusive_rro' #TODO
