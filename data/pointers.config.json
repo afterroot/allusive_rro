@@ -1,0 +1,41 @@
+{
+  "title": "Pointers Request Schema",
+  "version": {
+    "name": "v0.0.1",
+    "code": 1
+  },
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "properties": {
+    "version": {
+      "type": "integer"
+    },
+    "requests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "description": "File name of pointer with extension."
+          },
+          "uid": {
+            "type": "string",
+            "description": "Uid of user who has requested."
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "Timestamp of request."
+          },
+          "exclude": {
+            "type": "boolean",
+            "description": "If true, rro will not be builded."
+          },
+          "force": {
+            "type": "boolean",
+            "description": "If true, rro will be builded even if it is already exist."
+          }
+        }
+      }
+    }
+  }
+}

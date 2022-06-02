@@ -1,7 +1,7 @@
 import os
 import json
 import shutil
-# from PIL import Image
+from PIL import Image
 
 # get cureent path
 rootDir = os.getcwd()
@@ -30,7 +30,7 @@ def getFileName(path: str) -> str:
     return os.path.splitext(path)[0]
 
 
-""" def resizeAndSavePointer(pointerFile: str):
+def resizeAndSavePointer(pointerFile: str):
     print(f'Saving {pointerFile}...')
     im = Image.open(os.path.join(pointersDir, pointerFile))
     im.resize((49, 49)).save(
@@ -43,16 +43,18 @@ def getFileName(path: str) -> str:
         os.path.join(rootDir, 'app', 'src', 'main', 'res',
                      'drawable-xhdpi-v4', 'pointer_spot_touch.png'))
 
- """
 
+def buildRROApk(pointerFile: str, force: bool = False):
+    if not os.path.exists(os.path.join(rrosDir, f'RRO_{getFileName(pointerFile)}.apk')) or force:
+        resizeAndSavePointer(pointerFile)
 
-def buildRROApk(pointerFile: str):
-    if not os.path.exists(os.path.join(rrosDir, f'RRO_{getFileName(pointerFile)}.apk')):
-        # resizeAndSavePointer(pointerFile)
-
-        print('Buiilding RRO Apk...')
-        os.system(
-            f'./gradlew assembleRelease -PpointerName={pointerFile} --daemon')
+        print(f'Building RRO Apk... | Force: {force}')
+        if os.name == 'nt':
+            os.system(
+                f'gradlew assembleRelease -PpointerName={pointerFile} --daemon')
+        else:
+            os.system(
+                f'./gradlew assembleRelease -PpointerName={pointerFile} --daemon')
 
         # check if directory exists
         if not os.path.exists(rrosDir):
@@ -88,14 +90,19 @@ with open(os.path.join(rootDir, 'data', 'pointers.json'), 'r') as f:
 
 for i in pointers['requests']:
     pointerFile = i['fileName']
+    forceBuild = i.get('force', False)
+    exclude = i.get('exclude', False)
     downloaded = False
 
-    if not os.path.exists(os.path.join(pointersDir, pointerFile)):
-        downloaded = True
-        downloadPointer(pointerFile)
+    if exclude == False:
+        if not os.path.exists(os.path.join(pointersDir, pointerFile)):
+            downloaded = True
+            downloadPointer(pointerFile)
 
-    isRROBuilt = buildRROApk(pointerFile)
-    print(f'{pointerFile} | Downloaded-{downloaded} | RRO Builded-{isRROBuilt}')
+        isRROBuilt = buildRROApk(pointerFile, forceBuild)
+        print(f'{pointerFile} | Downloaded-{downloaded} | RRO Builded-{isRROBuilt}')
+    else:
+        print(f'{pointerFile} | Downloaded-Excluded | RRO Builded-Excluded')
 
 # pushRepo()
 print('Stopping gradle daemon...')
