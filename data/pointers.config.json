@@ -28,13 +28,27 @@
           },
           "exclude": {
             "type": "boolean",
-            "description": "If true, rro will not be builded."
+            "description": "If true, rro will not be built."
           },
           "force": {
             "type": "boolean",
-            "description": "If true, rro will be builded even if it is already exist."
+            "description": "If true, rro will be built even if it is already exist."
+          },
+          "documentId": {
+            "type": "string",
+            "description": "Id of pointer document."
+          },
+          "isRequestClosed": {
+            "type": "boolean",
+            "description": "If true, request is closed."
           }
-        }
+        },
+        "required": [
+          "fileName",
+          "uid",
+          "timestamp",
+          "documentId"
+        ]
       }
     }
   }
