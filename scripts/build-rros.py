@@ -2,8 +2,11 @@ import os
 import json
 import shutil
 from PIL import Image
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
 
-# get cureent path
+# get current path
 rootDir = os.getcwd()
 
 repoDir = os.path.join(rootDir, 'repo')
@@ -73,6 +76,25 @@ def buildRROApk(pointerFile: str, force: bool = False):
         return False
 
 
+def init_firestore():
+    try:
+        keyJson = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
+    except KeyError:
+        keyJson = 'release/pointer-replacer-sa.json'
+
+    print(keyJson)
+
+    cred = credentials.Certificate(keyJson)
+    firebase_admin.initialize_app(cred)
+
+    return firestore.client()
+
+
+def update_firestore(documentId: str, hasRRO: bool):
+    batch.update(db.collection('pointers').document(
+        documentId), {'hasRRO': hasRRO})
+
+
 def pushRepo():
     os.chdir(repoDir)
     os.system('git add .')
@@ -85,6 +107,10 @@ def pushRepo():
 
 
 # start
+
+db = init_firestore()
+batch = db.batch()
+
 with open(os.path.join(rootDir, 'data', 'pointers.json'), 'r') as f:
     pointers = json.load(f)
 
@@ -94,16 +120,25 @@ for i in pointers['requests']:
     exclude = i.get('exclude', False)
     downloaded = False
 
-    if exclude == False:
+    if not exclude:
         if not os.path.exists(os.path.join(pointersDir, pointerFile)):
             downloaded = True
             downloadPointer(pointerFile)
 
         isRROBuilt = buildRROApk(pointerFile, forceBuild)
-        print(f'{pointerFile} | Downloaded-{downloaded} | RRO Builded-{isRROBuilt}')
+        print(f'{pointerFile} | Downloaded-{downloaded} | RRO Built-{isRROBuilt}')
     else:
-        print(f'{pointerFile} | Downloaded-Excluded | RRO Builded-Excluded')
+        print(f'{pointerFile} | Downloaded-Excluded | RRO Built-Excluded')
 
-# pushRepo()
+    update_firestore(i['documentId'],
+                     os.path.exists(os.path.join(rrosDir, f'RRO_{getFileName(pointerFile)}.apk')))
+
+
+print('Updating in Firestore...')
+batch.commit()
+
 print('Stopping gradle daemon...')
-os.system('./gradlew --stop')
+if os.name == 'nt':
+    os.system('gradlew --stop')
+else:
+    os.system('./gradlew --stop')
