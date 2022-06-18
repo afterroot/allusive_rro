@@ -82,8 +82,6 @@ def init_firestore():
     except KeyError:
         keyJson = 'release/pointer-replacer-sa.json'
 
-    print(keyJson)
-
     cred = credentials.Certificate(keyJson)
     firebase_admin.initialize_app(cred)
 
@@ -93,17 +91,8 @@ def init_firestore():
 def update_firestore(documentId: str, hasRRO: bool):
     batch.update(db.collection('pointers').document(
         documentId), {'hasRRO': hasRRO})
-
-
-def pushRepo():
-    os.chdir(repoDir)
-    os.system('git add .')
-    os.system('git commit -m "update pointers"')
-    os.system('git push')
-    os.chdir(rootDir)
-    os.system('git add repo')
-    os.system('git commit -m "update repo"')
-    os.system('git push')
+    batch.update(db.collection('requests').document(
+        documentId), {'isRequestClosed': hasRRO})
 
 
 # start
@@ -130,12 +119,24 @@ for i in pointers['requests']:
     else:
         print(f'{pointerFile} | Downloaded-Excluded | RRO Built-Excluded')
 
-    update_firestore(i['documentId'],
-                     os.path.exists(os.path.join(rrosDir, f'RRO_{getFileName(pointerFile)}.apk')))
+    hasRRO = os.path.exists(os.path.join(
+        rrosDir, f'RRO_{getFileName(pointerFile)}.apk'))
 
+    update_firestore(i['documentId'], hasRRO)
+
+    index = pointers['requests'].index(i)
+    pointers['requests'][index]['isRequestClosed'] = hasRRO
 
 print('Updating in Firestore...')
 batch.commit()
+
+# update pointers.json
+print('Updating pointers.json...')
+with open(os.path.join(rootDir, 'data', 'pointers.json'), 'w') as f:
+    json.dump(pointers, f,
+              indent=2,
+              sort_keys=True,
+              separators=(',', ': '))
 
 print('Stopping gradle daemon...')
 if os.name == 'nt':
