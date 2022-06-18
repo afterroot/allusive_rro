@@ -2,36 +2,36 @@
   "$schema": "pointers.config.json",
   "requests": [
     {
-      "fileName": "pointer7566531785982733888.png",
-      "uid": "G8Aw1tpEtcQIM02XLyYwIbvDcX73",
-      "timestamp": "2022-05-22T14:33:00.000Z",
-      "force": true,
       "documentId": "DUVBMOMJ5Q1URrFzfIPK",
-      "isRequestClosed": true
+      "fileName": "pointer7566531785982733888.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2022-05-22T14:33:00.000Z",
+      "uid": "G8Aw1tpEtcQIM02XLyYwIbvDcX73"
     },
     {
-      "fileName": "pointer984880143658032583.png",
-      "uid": "G8Aw1tpEtcQIM02XLyYwIbvDcX73",
-      "timestamp": "2022-05-22T14:33:00.000Z",
-      "force": true,
       "documentId": "2LVmuXg5aNWOlWgMpTFw",
-      "isRequestClosed": true
+      "fileName": "pointer984880143658032583.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2022-05-22T14:33:00.000Z",
+      "uid": "G8Aw1tpEtcQIM02XLyYwIbvDcX73"
     },
     {
-      "fileName": "pointer995469354243849637.png",
-      "uid": "G8Aw1tpEtcQIM02XLyYwIbvDcX73",
-      "timestamp": "2022-05-22T14:33:00.000Z",
-      "force": true,
       "documentId": "jKXYRGoWeZ1TTEOD0Ttw",
-      "isRequestClosed": true
+      "fileName": "pointer995469354243849637.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2022-05-22T14:33:00.000Z",
+      "uid": "G8Aw1tpEtcQIM02XLyYwIbvDcX73"
     },
     {
-      "fileName": "pointer5732832476780871875.png",
-      "uid": "G8Aw1tpEtcQIM02XLyYwIbvDcX73",
-      "timestamp": "2022-05-22T14:33:00.000Z",
-      "force": true,
       "documentId": "RNqIYDasjlt7vhBERjV1",
-      "isRequestClosed": true
+      "fileName": "pointer5732832476780871875.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2022-05-22T14:33:00.000Z",
+      "uid": "G8Aw1tpEtcQIM02XLyYwIbvDcX73"
     }
   ],
   "version": 1
