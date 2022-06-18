@@ -1,0 +1,69 @@
+name: Get RRO Open Requests
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  build:
+    name: Get RRO Open Requests
+    runs-on: ubuntu-latest
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    steps:
+
+      - uses: act10ns/slack@v1
+        with:
+          status: starting
+          channel: '#pointer-replacer'
+        if: always()
+
+      - name: Check Out
+        id: check-out
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.PRIV_REPO_PAT }}
+          submodules: 'recursive'
+
+      - name: Set up Python 3
+        id: setup-python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+
+      - run: pip install -r requirements.txt
+
+      - id: auth
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0
+
+      - name: run get-pending-requests.py
+        run: python scripts/get-pending-requests.py
+
+      - name: Commit to allusive_rro
+        working-directory: ./
+        run: |
+          git config --global user.name "Sandip Vaghela"
+          git config --global user.email "12868991+thesandipv@users.noreply.github.com"
+          git add .
+          echo "commit to allusive_rro"
+          git commit -m "[Requests] update requests"
+
+      - name: Push changes to allusive_rro
+        working-directory: ./
+        run: |
+          git push
+
+      - uses: act10ns/slack@v1
+        if: always()
+        with:
+          status: ${{ job.status }}
+          steps: ${{ toJson(steps) }}
+          channel: '#pointer-replacer'
