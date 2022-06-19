@@ -38,7 +38,7 @@
       "exclude": false,
       "fileName": "pointer1672990221.png",
       "force": false,
-      "isRequestClosed": false,
+      "isRequestClosed": true,
       "timestamp": "2022-06-06 16:13:46.034000+00:00",
       "uid": "G8Aw1tpEtcQIM02XLyYwIbvDcX73"
     },
@@ -47,7 +47,7 @@
       "exclude": false,
       "fileName": "pointer5420600761856542082.png",
       "force": false,
-      "isRequestClosed": false,
+      "isRequestClosed": true,
       "timestamp": "2022-06-18 12:06:30.183000+00:00",
       "uid": "194X4Ql0tOhGovzeBIEd13reEkR2"
     },
@@ -56,7 +56,7 @@
       "exclude": false,
       "fileName": "pointer91075902.png",
       "force": false,
-      "isRequestClosed": false,
+      "isRequestClosed": true,
       "timestamp": "2022-06-07 17:36:55.566000+00:00",
       "uid": "G8Aw1tpEtcQIM02XLyYwIbvDcX73"
     },
@@ -65,7 +65,7 @@
       "exclude": false,
       "fileName": "pointer7869967304372838244.png",
       "force": false,
-      "isRequestClosed": false,
+      "isRequestClosed": true,
       "timestamp": "2022-06-06 16:05:00.924000+00:00",
       "uid": "G8Aw1tpEtcQIM02XLyYwIbvDcX73"
     }
