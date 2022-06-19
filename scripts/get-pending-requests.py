@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
@@ -41,12 +42,19 @@ for doc in query_open_requests:
 removed_dups = [i for n, i in enumerate(
     pointers['requests']) if i not in pointers['requests'][n + 1:]]
 
-pointers['requests'] = removed_dups
+if len(requests) > 0:
+    pointers['requests'] = removed_dups
 
-# update pointers.json
-print('Updating pointers.json...')
-with open(os.path.join(rootDir, 'data', 'pointers.json'), 'w') as f:
-    json.dump(pointers, f,
-              indent=2,
-              sort_keys=True,
-              separators=(',', ': '))
+    # update pointers.json
+    print('Updating pointers.json...')
+    with open(os.path.join(rootDir, 'data', 'pointers.json'), 'w') as f:
+        json.dump(pointers, f,
+                  indent=2,
+                  sort_keys=True,
+                  separators=(',', ': '))
+    os.environ['BUILD_RROS'] = 'true'
+    sys.exit(0)
+else:
+    os.environ['BUILD_RROS'] = 'false'
+    print('No pending requests found.')
+    sys.exit(1)
