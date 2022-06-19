@@ -122,7 +122,8 @@ for i in pointers['requests']:
     hasRRO = os.path.exists(os.path.join(
         rrosDir, f'RRO_{getFileName(pointerFile)}.apk'))
 
-    update_firestore(i['documentId'], hasRRO)
+    if i['isRequestClosed'] == False:
+        update_firestore(i['documentId'], hasRRO)
 
     index = pointers['requests'].index(i)
     pointers['requests'][index]['isRequestClosed'] = hasRRO
