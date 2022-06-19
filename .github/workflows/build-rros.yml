@@ -79,14 +79,9 @@ jobs:
         continue-on-error: true
         run: python scripts/get-pending-requests.py
 
-      - name: output of pending-requests
-        id: out-pending-requests
-        if: always()
-        run: echo ${{ steps.get-pending-requests.outcome }}
-
       - name: Build with Gradle
         id: build
-        if: 'success' == ${{ steps.get-pending-requests.outcome }}
+        if: ${{ 'success' == steps.get-pending-requests.outcome }}
         uses: gradle/gradle-build-action@v2
         env:
           CI: true
@@ -97,24 +92,24 @@ jobs:
           arguments: :app:assemble --stacktrace
 
       - name: Build RRO Apks
-        if: 'success' == ${{ steps.get-pending-requests.outcome }}
+        if: ${{ 'success' == steps.get-pending-requests.outcome }}
         run: python scripts/build-rros.py
         env:
           SIGN_KEY_PW: ${{ secrets.SIGN_KEY_PW }}
           SIGN_STORE_PW: ${{ secrets.SIGN_STORE_PW }}
 
       - name: Commit to allusive-repo
-        if: 'success' == ${{ steps.get-pending-requests.outcome }}
+        if: ${{ 'success' == steps.get-pending-requests.outcome }}
         working-directory: ./repo
         run: |
           git config --global user.name "Sandip (via GH Actions)"
           git config --global user.email "12868991+thesandipv@users.noreply.github.com"
-          git checkout ${GITHUB_REF##*/}
+          git checkout main
           echo "commit to allusive-repo"
           git commit -m "[Repo] update pointers"
 
       - name: Commit to allusive_rro
-        if: 'success' == ${{ steps.get-pending-requests.outcome }}
+        if: ${{ 'success' == steps.get-pending-requests.outcome }}
         working-directory: ./
         run: |
           git add repo
@@ -122,7 +117,7 @@ jobs:
           git commit -m "[Submodule] update repo"
 
       - name: Commit pointers.json to allusive_rro
-        if: 'success' == ${{ steps.get-pending-requests.outcome }}
+        if: ${{ 'success' == steps.get-pending-requests.outcome }}
         working-directory: ./
         run: |
           git add data/pointers.json
@@ -130,11 +125,13 @@ jobs:
           git commit -m "update request status in pointers.json"
 
       - name: Push changes to allusive-repo
+        if: ${{ 'success' == steps.get-pending-requests.outcome }}
         working-directory: ./repo
         run: |
           git push
 
       - name: Push changes to allusive_rro
+        if: ${{ 'success' == steps.get-pending-requests.outcome }}
         working-directory: ./
         run: |
           git push
