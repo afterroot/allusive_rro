@@ -446,6 +446,42 @@
       "isRequestClosed": true,
       "timestamp": "2022-07-06 17:27:21.954000+00:00",
       "uid": "UdfOGkCkKPh6ZOg0cn6RRFD1YDe2"
+    },
+    {
+      "documentId": "4TmGECGXtU6kLXQKrK9i",
+      "exclude": false,
+      "fileName": "pointer4894738506960228042.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2022-07-07 22:26:01.587000+00:00",
+      "uid": "cAHZQxpT6YXPsn5V4Hg5wsRvxs23"
+    },
+    {
+      "documentId": "Tmf1AxiEinqEUT7oVPZP",
+      "exclude": false,
+      "fileName": "pointer8935465170324104969.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2022-07-07 17:37:02.233000+00:00",
+      "uid": "f4NVcAzb41PoG063kMUvXvmTQMk1"
+    },
+    {
+      "documentId": "ZQ9jq2bvzf5QKFcydYOY",
+      "exclude": false,
+      "fileName": "pointer8113599153371398221.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2022-07-07 22:24:25.478000+00:00",
+      "uid": "cAHZQxpT6YXPsn5V4Hg5wsRvxs23"
+    },
+    {
+      "documentId": "fFUvATEo2n8cKYjGBTgJ",
+      "exclude": false,
+      "fileName": "pointer618375615682246359.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2022-07-07 17:56:43.140000+00:00",
+      "uid": "f4NVcAzb41PoG063kMUvXvmTQMk1"
     }
   ],
   "version": 1
