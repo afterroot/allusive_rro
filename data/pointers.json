@@ -2534,6 +2534,33 @@
       "isRequestClosed": true,
       "timestamp": "2022-09-07 15:27:11.254000+00:00",
       "uid": "C0XMgDmOr5RsqkdNPI9nEGFt7rg1"
+    },
+    {
+      "documentId": "1blAPcTkLKKEqvPv8t9C",
+      "exclude": false,
+      "fileName": "pointer8452679336327895539.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2022-09-09 19:17:55.659000+00:00",
+      "uid": "YxTrCmZYbcWU837ppXiA7jnZIg32"
+    },
+    {
+      "documentId": "XeoKw3WOCZUjbwo345WN",
+      "exclude": false,
+      "fileName": "pointer1258082223794998240.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2022-09-09 20:56:51.790000+00:00",
+      "uid": "bqeDOyP51mhVBKP987gg1543pdn1"
+    },
+    {
+      "documentId": "yf6zcYjsQqmWqJVLUrYp",
+      "exclude": false,
+      "fileName": "pointer1173563586414449811.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2022-09-09 02:53:34.078000+00:00",
+      "uid": "rIyZC1uHSmfgtK0CzQlUGgvGLry1"
     }
   ],
   "version": 1
