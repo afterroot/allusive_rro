@@ -2804,6 +2804,33 @@
       "isRequestClosed": true,
       "timestamp": "2022-09-22 01:10:22.474000+00:00",
       "uid": "wKSyFca28FfnjR0j1IKxOGMkj6G2"
+    },
+    {
+      "documentId": "8JoN618YgHySMpBWIjm9",
+      "exclude": false,
+      "fileName": "pointer3210315756986104795.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2022-09-22 21:26:22.374000+00:00",
+      "uid": "wmJ8Ooj69lb4tq7QDo1r0R3h9Xk1"
+    },
+    {
+      "documentId": "Gw79MsBgjQyHaq7bcHTL",
+      "exclude": false,
+      "fileName": "pointer5128650385269661281.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2022-09-22 18:40:58.615000+00:00",
+      "uid": "1Dw1vdViV0dfxwhOyb71rELJKPi2"
+    },
+    {
+      "documentId": "UVDxrAUwia5uz723KJ07",
+      "exclude": false,
+      "fileName": "pointer7189064645328027016.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2022-09-22 12:04:11.979000+00:00",
+      "uid": "ge1Gw7aaiadITeZb6WnIcs7W1Zk2"
     }
   ],
   "version": 1
