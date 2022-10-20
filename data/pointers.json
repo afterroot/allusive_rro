@@ -3767,6 +3767,24 @@
       "isRequestClosed": true,
       "timestamp": "2022-10-18 20:06:53.363000+00:00",
       "uid": "X1wWeTRp4pYLQh3WPTtx8WfIaQE3"
+    },
+    {
+      "documentId": "7eW5A71EA9Lco7UJswST",
+      "exclude": false,
+      "fileName": "pointer1110738101218019390.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2022-10-19 22:35:20.543000+00:00",
+      "uid": "FjgwPNMxLgN3LYmDvfRtdC32VVu2"
+    },
+    {
+      "documentId": "oe4tr3sjSt04pjPMHSyz",
+      "exclude": false,
+      "fileName": "pointer1001025588.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2022-10-20 00:25:49.710000+00:00",
+      "uid": "IFN6FWt0NTQuVkF8VME5CYjhgME2"
     }
   ],
   "version": 1
