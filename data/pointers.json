@@ -9455,6 +9455,51 @@
       "isRequestClosed": true,
       "timestamp": "2023-08-06 16:49:51.712000+00:00",
       "uid": "A5XepfGsboSkh8BOcUEWfvwYQG83"
+    },
+    {
+      "documentId": "7GvWISwoymYfNpRXwurA",
+      "exclude": false,
+      "fileName": "pointer7711124785628906425.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2023-08-07 09:38:31.916000+00:00",
+      "uid": "nL8XnFXLrETGMLi2Y7dsCu6SOnJ2"
+    },
+    {
+      "documentId": "7w3BImcRPYKwl7zscRMV",
+      "exclude": false,
+      "fileName": "pointer4893850496728782673.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2023-08-07 02:12:33.823000+00:00",
+      "uid": "SSKsEYvz8rgWmOZ5PaWDdxCWrOb2"
+    },
+    {
+      "documentId": "Lh4Stnlr04l9Na6lj8Qd",
+      "exclude": false,
+      "fileName": "pointer-998381957.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2023-08-07 22:54:39.056000+00:00",
+      "uid": "spubTF6SnybkiCr9oUvh1EuDZkD3"
+    },
+    {
+      "documentId": "MDuG4CXlRNFe4qItsb4x",
+      "exclude": false,
+      "fileName": "pointer6973971890189357565.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2023-08-07 22:55:31.852000+00:00",
+      "uid": "spubTF6SnybkiCr9oUvh1EuDZkD3"
+    },
+    {
+      "documentId": "iDrRTrtOtrHrgNbGXo1R",
+      "exclude": false,
+      "fileName": "pointer7491304365529865023.png",
+      "force": false,
+      "isRequestClosed": true,
+      "timestamp": "2023-08-07 22:55:46.789000+00:00",
+      "uid": "spubTF6SnybkiCr9oUvh1EuDZkD3"
     }
   ],
   "version": 1
