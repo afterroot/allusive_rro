@@ -82,7 +82,7 @@ jobs:
       - name: Build with Gradle
         id: build
         if: ${{ 'success' == steps.get-pending-requests.outcome }}
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v2.7.0
         env:
           CI: true
           GHTOKEN: ${{ secrets.PRIV_REPO_PAT }}
