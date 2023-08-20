@@ -13,11 +13,14 @@
  * limitations under the License.
  */
 
+// TODO Migration Pending
+
 plugins {
     id 'com.android.application'
 }
 
 android {
+    namespace "com.afterroot.allusive_rro"
     compileSdk 31
 
     defaultConfig {
