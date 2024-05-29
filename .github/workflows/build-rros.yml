@@ -6,8 +6,6 @@ on:
     - cron: '0 0 * * *'
 
 #  push:
-#    tags-ignore:
-#      - 'status-update'
 #    branches: [ main ]
 #    paths:
 #      - 'data/pointers.json'
@@ -24,7 +22,7 @@ jobs:
       - uses: act10ns/slack@v1
         with:
           status: starting
-          channel: '#pointer-replacer'
+          channel: '#builds'
         if: always()
 
       - name: Check Out
@@ -102,25 +100,17 @@ jobs:
         if: ${{ 'success' == steps.get-pending-requests.outcome }}
         working-directory: ./repo
         run: |
-          git config --global user.name "Sandip (via GH Actions)"
-          git config --global user.email "12868991+thesandipv@users.noreply.github.com"
+          git config --global user.name "AfterROOT (via GH Actions)"
+          git config --global user.email "afterhasroot@gmail.com"
           git checkout main
           echo "commit to allusive-repo"
-          git commit -m "[Repo] update pointers"
+          git commit -m "Generated RRO Apks"
 
       - name: Commit to allusive_rro
         if: ${{ 'success' == steps.get-pending-requests.outcome }}
         working-directory: ./
         run: |
-          git add repo
-          echo "commit to allusive_rro"
-          git commit -m "[Submodule] update repo"
-
-      - name: Commit pointers.json to allusive_rro
-        if: ${{ 'success' == steps.get-pending-requests.outcome }}
-        working-directory: ./
-        run: |
-          git add data/pointers.json
+          git add repo data/pointers.json
           echo "commit to allusive_rro"
           git commit -m "update request status in pointers.json"
 
@@ -140,17 +130,9 @@ jobs:
         if: always()
         run: ./release/clean.sh
 
-      #      - name: Upload build reports
-      #        id: upload-reports
-      #        if: always()
-      #        uses: actions/upload-artifact@v1
-      #        with:
-      #          name: build-reports
-      #          path: app/build/reports
-
       - uses: act10ns/slack@v1
         if: always()
         with:
           status: ${{ job.status }}
           steps: ${{ toJson(steps) }}
-          channel: '#pointer-replacer'
+          channel: '#builds'
