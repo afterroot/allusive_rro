@@ -6,8 +6,6 @@ on:
     - cron: '0 0 * * *'
 
 #  push:
-#    tags-ignore:
-#      - 'status-update'
 #    branches: [ main ]
 #    paths:
 #      - 'data/pointers.json'
@@ -21,30 +19,30 @@ jobs:
 
     steps:
 
-      - uses: act10ns/slack@v1
+      - uses: act10ns/slack@v2
         with:
-          status: starting
-          channel: '#pointer-replacer'
+          status: ${{ job.status }}
         if: always()
 
       - name: Check Out
         id: check-out
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.PRIV_REPO_PAT }}
           submodules: 'recursive'
 
-      - name: set up JDK
+      - name: Set up JDK
         id: setup-jdk
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
-          java-version: 11
+          distribution: 'zulu'
+          java-version: 17
 
       - name: Set up Python 3
         id: setup-python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.10'
           cache: 'pip'
 
       - run: pip install -r requirements.txt
@@ -67,29 +65,33 @@ jobs:
         run: chmod +x gradlew
 
       - id: auth
-        uses: google-github-actions/auth@v0
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v0
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: run get-pending-requests.py
         id: get-pending-requests
         continue-on-error: true
         run: python scripts/get-pending-requests.py
 
+      - name: Setup Gradle
+        id: setup-gradle
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: wrapper
+
       - name: Build with Gradle
         id: build
         if: ${{ 'success' == steps.get-pending-requests.outcome }}
-        uses: gradle/gradle-build-action@v2.7.0
+        run: ./gradlew :app:assemble --stacktrace
         env:
           CI: true
           GHTOKEN: ${{ secrets.PRIV_REPO_PAT }}
           SIGN_KEY_PW: ${{ secrets.SIGN_KEY_PW }}
           SIGN_STORE_PW: ${{ secrets.SIGN_STORE_PW }}
-        with:
-          arguments: :app:assemble --stacktrace
 
       - name: Build RRO Apks
         if: ${{ 'success' == steps.get-pending-requests.outcome }}
@@ -102,25 +104,17 @@ jobs:
         if: ${{ 'success' == steps.get-pending-requests.outcome }}
         working-directory: ./repo
         run: |
-          git config --global user.name "Sandip (via GH Actions)"
-          git config --global user.email "12868991+thesandipv@users.noreply.github.com"
+          git config --global user.name "afterroot-bot"
+          git config --global user.email "bot@afterroot.com"
           git checkout main
           echo "commit to allusive-repo"
-          git commit -m "[Repo] update pointers"
+          git commit -m "Generated RRO Apks"
 
       - name: Commit to allusive_rro
         if: ${{ 'success' == steps.get-pending-requests.outcome }}
         working-directory: ./
         run: |
-          git add repo
-          echo "commit to allusive_rro"
-          git commit -m "[Submodule] update repo"
-
-      - name: Commit pointers.json to allusive_rro
-        if: ${{ 'success' == steps.get-pending-requests.outcome }}
-        working-directory: ./
-        run: |
-          git add data/pointers.json
+          git add repo data/pointers.json
           echo "commit to allusive_rro"
           git commit -m "update request status in pointers.json"
 
@@ -140,17 +134,8 @@ jobs:
         if: always()
         run: ./release/clean.sh
 
-      #      - name: Upload build reports
-      #        id: upload-reports
-      #        if: always()
-      #        uses: actions/upload-artifact@v1
-      #        with:
-      #          name: build-reports
-      #          path: app/build/reports
-
       - uses: act10ns/slack@v1
         if: always()
         with:
           status: ${{ job.status }}
           steps: ${{ toJson(steps) }}
-          channel: '#pointer-replacer'
