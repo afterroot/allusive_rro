@@ -72,36 +72,20 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: run get-pending-requests.py
-        id: get-pending-requests
+      - name: Fetch Pending Requests
+        id: fetch-pending-requests
         continue-on-error: true
-        run: python scripts/get-pending-requests.py
+        run: python scripts/fetch_pending_requests.py
 
-      - name: Setup Gradle
-        id: setup-gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: wrapper
-
-      - name: Build with Gradle
-        id: build
-        if: ${{ 'success' == steps.get-pending-requests.outcome }}
-        run: ./gradlew :app:assemble --stacktrace
-        env:
-          CI: true
-          GHTOKEN: ${{ secrets.PRIV_REPO_PAT }}
-          SIGN_KEY_PW: ${{ secrets.SIGN_KEY_PW }}
-          SIGN_STORE_PW: ${{ secrets.SIGN_STORE_PW }}
-
-      - name: Build RRO Apks
-        if: ${{ 'success' == steps.get-pending-requests.outcome }}
-        run: python scripts/build-rros.py
+      - name: Process and Build Requested RROs
+        if: ${{ 'success' == steps.fetch-pending-requests.outcome }}
+        run: python scripts/process_requested_rros.py
         env:
           SIGN_KEY_PW: ${{ secrets.SIGN_KEY_PW }}
           SIGN_STORE_PW: ${{ secrets.SIGN_STORE_PW }}
 
       - name: Commit to allusive-repo
-        if: ${{ 'success' == steps.get-pending-requests.outcome }}
+        if: ${{ 'success' == steps.fetch-pending-requests.outcome }}
         working-directory: ./repo
         run: |
           git config --global user.name "afterroot-bot"
@@ -111,7 +95,7 @@ jobs:
           git commit -m "Generated RRO Apks"
 
       - name: Commit to allusive_rro
-        if: ${{ 'success' == steps.get-pending-requests.outcome }}
+        if: ${{ 'success' == steps.fetch-pending-requests.outcome }}
         working-directory: ./
         run: |
           git add repo data/pointers.json
@@ -119,13 +103,13 @@ jobs:
           git commit -m "update request status in pointers.json"
 
       - name: Push changes to allusive-repo
-        if: ${{ 'success' == steps.get-pending-requests.outcome }}
+        if: ${{ 'success' == steps.fetch-pending-requests.outcome }}
         working-directory: ./repo
         run: |
           git push
 
       - name: Push changes to allusive_rro
-        if: ${{ 'success' == steps.get-pending-requests.outcome }}
+        if: ${{ 'success' == steps.fetch-pending-requests.outcome }}
         working-directory: ./
         run: |
           git push
