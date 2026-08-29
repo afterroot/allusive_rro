@@ -301,6 +301,8 @@ def build_rro(
             [
                 apksigner,
                 "sign",
+                "--v4-signing-enabled",
+                "false",
                 "--ks",
                 keystore,
                 "--ks-pass",
