@@ -328,6 +328,7 @@ def package_magisk_module(
     output_zip,
     module_id="pointer_replacer_rro",
     module_name="Pointer Replacer RRO",
+    pointer_name=None,
     author="thesandipv",
     version="v2.0",
     version_code=2,
@@ -335,8 +336,12 @@ def package_magisk_module(
     out_zip = Path(output_zip).resolve()
     out_zip.parent.mkdir(parents=True, exist_ok=True)
 
+    display_name = (
+        f"Pointer Replacer RRO - {pointer_name}" if pointer_name else module_name
+    )
+
     module_prop = f"""id={module_id}
-name={module_name}
+name={display_name}
 version={version}
 versionCode={version_code}
 author={author}
@@ -432,6 +437,12 @@ def main():
         default="Pointer Replacer RRO",
         help="Magisk module display name",
     )
+    parser.add_argument(
+        "--pointer-name",
+        type=str,
+        default=None,
+        help="Human-readable pointer name (from Firestore)",
+    )
     parser.add_argument("--priority", type=int, default=99, help="Overlay priority")
     parser.add_argument(
         "--batch-dir",
@@ -483,7 +494,10 @@ def main():
         )
         if args.magisk_zip:
             package_magisk_module(
-                apk_path, args.magisk_zip, module_name=args.module_name
+                apk_path,
+                args.magisk_zip,
+                module_name=args.module_name,
+                pointer_name=args.pointer_name,
             )
 
 

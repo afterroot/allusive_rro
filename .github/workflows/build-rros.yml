@@ -91,8 +91,9 @@ jobs:
           git config --global user.name "afterroot-bot"
           git config --global user.email "bot@afterroot.com"
           git checkout main
+          git add pointers rros modules
           echo "commit to allusive-repo"
-          git commit -m "Generated RRO Apks"
+          git commit -m "Generated RRO Apks and Magisk Module Zips"
 
       - name: Commit to allusive_rro
         if: ${{ 'success' == steps.fetch-pending-requests.outcome }}
