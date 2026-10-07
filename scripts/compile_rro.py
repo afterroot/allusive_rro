@@ -45,8 +45,15 @@ def find_android_tools():
                     apksigner = str(latest_bt / "apksigner")
         platforms_dir = Path(sdk_root) / "platforms"
         if platforms_dir.is_dir():
+            def parse_platform_ver(p):
+                name = p.parent.name.replace("android-", "")
+                try:
+                    return [int(x) for x in name.split(".")]
+                except ValueError:
+                    return [0]
+
             platforms = sorted(
-                platforms_dir.glob("android-*/android.jar"), key=lambda p: p.parent.name
+                platforms_dir.glob("android-*/android.jar"), key=parse_platform_ver
             )
             if platforms:
                 android_jar = str(platforms[-1])
@@ -185,7 +192,7 @@ def build_rro(
     package="{package_name}"
     android:versionCode="2"
     android:versionName="2.0">
-    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="34" />
+    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="35" />
     <overlay android:targetPackage="{target_package}" android:resourcesMap="@xml/overlays" android:priority="{priority}" android:isStatic="true" />
     <application android:hasCode="false" android:label="Pointer Overlay" />
 </manifest>
@@ -195,12 +202,21 @@ def build_rro(
         xml_dir.mkdir(parents=True, exist_ok=True)
         (xml_dir / "overlays.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
 <overlay xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Legacy Android (<= 14) Drawables & Pointer Icons -->
     <item target="drawable/pointer_spot_touch" value="@drawable/pointer_spot_touch" />
     <item target="drawable/pointer_spot_hover" value="@drawable/pointer_spot_hover" />
     <item target="drawable/pointer_spot_anchor" value="@drawable/pointer_spot_anchor" />
     <item target="drawable/pointer_spot_touch_icon" value="@drawable/pointer_spot_touch_icon" />
     <item target="drawable/pointer_spot_hover_icon" value="@drawable/pointer_spot_hover_icon" />
     <item target="drawable/pointer_spot_anchor_icon" value="@drawable/pointer_spot_anchor_icon" />
+
+    <!-- Android 15 QPR1+ & Android 16 Vector Pointer Drawables & Icons -->
+    <item target="drawable/pointer_spot_touch_vector" value="@drawable/pointer_spot_touch" />
+    <item target="drawable/pointer_spot_hover_vector" value="@drawable/pointer_spot_hover" />
+    <item target="drawable/pointer_spot_anchor_vector" value="@drawable/pointer_spot_anchor" />
+    <item target="drawable/pointer_spot_touch_vector_icon" value="@drawable/pointer_spot_touch_vector_icon" />
+    <item target="drawable/pointer_spot_hover_vector_icon" value="@drawable/pointer_spot_hover_vector_icon" />
+    <item target="drawable/pointer_spot_anchor_vector_icon" value="@drawable/pointer_spot_anchor_vector_icon" />
 </overlay>
 """)
 
@@ -210,6 +226,9 @@ def build_rro(
             "pointer_spot_touch_icon.xml": "@drawable/pointer_spot_touch",
             "pointer_spot_hover_icon.xml": "@drawable/pointer_spot_hover",
             "pointer_spot_anchor_icon.xml": "@drawable/pointer_spot_anchor",
+            "pointer_spot_touch_vector_icon.xml": "@drawable/pointer_spot_touch",
+            "pointer_spot_hover_vector_icon.xml": "@drawable/pointer_spot_hover",
+            "pointer_spot_anchor_vector_icon.xml": "@drawable/pointer_spot_anchor",
         }
         for xml_name, bitmap_ref in xml_descriptors.items():
             (drawable_dir / xml_name).write_text(
@@ -354,7 +373,7 @@ ui_print "****************************************"
 ui_print "*        Allusive RRO Overlay          *"
 ui_print "****************************************"
 ui_print "- Target: Android System Framework (android)"
-ui_print "- Installing RRO overlay to /system/vendor/overlay"
+ui_print "- Installing RRO overlay to /system/product/overlay and /system/vendor/overlay"
 
 # Set permissions
 set_perm_recursive "$MODPATH/system" 0 0 0755 0644
@@ -374,6 +393,7 @@ ui_print "****************************************"
         zf.writestr("META-INF/com/google/android/updater-script", dummy_script)
         zf.writestr("META-INF/com/google/android/update-binary", dummy_binary)
         zf.write(apk_path, "system/vendor/overlay/allusive_rro.apk")
+        zf.write(apk_path, "system/product/overlay/allusive_rro.apk")
 
     print(f"[✓] Magisk Module ZIP packaged: {out_zip}")
     return str(out_zip)
