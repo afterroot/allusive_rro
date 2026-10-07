@@ -22,7 +22,9 @@ def load_pointer_names(cache_file="data/pointer_names.json"):
             with open(cache_path, "r", encoding="utf-8") as f:
                 names = json.load(f)
                 if names:
-                    print(f"[*] Loaded {len(names)} pointer names from cache: {cache_file}")
+                    print(
+                        f"[*] Loaded {len(names)} pointer names from cache: {cache_file}"
+                    )
                     return names
         except Exception as e:
             print(f"[!] Warning reading cache {cache_file}: {e}")
@@ -54,15 +56,15 @@ def load_pointer_names(cache_file="data/pointer_names.json"):
                 fname = data.get("filename")
                 name = data.get("name")
                 if fname and name:
-                    stem = Path(fname).stem
-                    names_map[stem] = name
                     names_map[fname] = name
             print(f"[✓] Fetched {len(names_map)} pointer names from Firestore.")
             cache_path.parent.mkdir(parents=True, exist_ok=True)
             with open(cache_path, "w", encoding="utf-8") as f:
                 json.dump(names_map, f, indent=2)
         else:
-            print("[!] Firestore credentials not found. Using filename fallback if cache not present.")
+            print(
+                "[!] Firestore credentials not found. Using filename fallback if cache not present."
+            )
     except Exception as e:
         print(f"[!] Warning fetching pointer names: {e}")
 
@@ -96,7 +98,9 @@ def process_pointer(args_tuple):
         )
 
         display_name = (
-            f"Pointer Replacer RRO - {pointer_name}" if pointer_name else f"Pointer Replacer RRO - {stem}"
+            f"Pointer Replacer RRO - {pointer_name}"
+            if pointer_name
+            else f"Pointer Replacer RRO - {stem}"
         )
 
         # Package flashable Magisk Module ZIP with Firestore pointer name
