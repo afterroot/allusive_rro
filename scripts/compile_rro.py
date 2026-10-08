@@ -160,9 +160,10 @@ def build_rro(
     image_path=None,
     style="glow_cyan",
     color=None,
-    package_name="com.afterroot.allusive_rro",
+    pointer_type="touch",
+    package_name=None,
     target_package="android",
-    output_apk="build/allusive_rro.apk",
+    output_apk=None,
     priority=99,
     keystore_path=None,
     keystore_pass="android",
@@ -170,7 +171,22 @@ def build_rro(
     key_pass="android",
 ):
     aapt2, zipalign, apksigner, android_jar = find_android_tools()
-    print(f"[*] Building RRO APK: {output_apk}")
+
+    if package_name is None:
+        package_name = (
+            "com.afterroot.allusive_rro_mouse"
+            if pointer_type == "mouse"
+            else "com.afterroot.allusive_rro"
+        )
+
+    if output_apk is None:
+        output_apk = (
+            "build/allusive_rro_mouse.apk"
+            if pointer_type == "mouse"
+            else "build/allusive_rro.apk"
+        )
+
+    print(f"[*] Building RRO APK ({pointer_type}): {output_apk}")
     print(f"    - Overlay Package: {package_name}")
     print(f"    - Target Package:  {target_package}")
 
@@ -186,6 +202,10 @@ def build_rro(
         res_dir = src_dir / "res"
         res_dir.mkdir(parents=True)
 
+        app_label = (
+            "Pointer Overlay (Mouse)" if pointer_type == "mouse" else "Pointer Overlay"
+        )
+
         manifest_path = src_dir / "AndroidManifest.xml"
         manifest_path.write_text(f"""<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -194,13 +214,70 @@ def build_rro(
     android:versionName="2.0">
     <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="35" />
     <overlay android:targetPackage="{target_package}" android:resourcesMap="@xml/overlays" android:priority="{priority}" android:isStatic="true" />
-    <application android:hasCode="false" android:label="Pointer Overlay" />
+    <application android:hasCode="false" android:label="{app_label}" />
 </manifest>
 """)
 
         xml_dir = res_dir / "xml"
         xml_dir.mkdir(parents=True, exist_ok=True)
-        (xml_dir / "overlays.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
+
+        if pointer_type == "mouse":
+            (xml_dir / "overlays.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
+<overlay xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Legacy Android (<= 14) Mouse Pointer Drawables & Icons -->
+    <item target="drawable/pointer_arrow" value="@drawable/pointer_arrow" />
+    <item target="drawable/pointer_arrow_large" value="@drawable/pointer_arrow_large" />
+    <item target="drawable/pointer_arrow_icon" value="@drawable/pointer_arrow_icon" />
+    <item target="drawable/pointer_arrow_large_icon" value="@drawable/pointer_arrow_large_icon" />
+
+    <!-- Android 15+ Vector Mouse Pointer Drawables & Icons -->
+    <item target="drawable/pointer_arrow_vector" value="@drawable/pointer_arrow" />
+    <item target="drawable/pointer_arrow_large_vector" value="@drawable/pointer_arrow_large" />
+    <item target="drawable/pointer_arrow_vector_icon" value="@drawable/pointer_arrow_vector_icon" />
+    <item target="drawable/pointer_arrow_large_vector_icon" value="@drawable/pointer_arrow_large_vector_icon" />
+</overlay>
+""")
+
+            drawable_dir = res_dir / "drawable"
+            drawable_dir.mkdir(parents=True, exist_ok=True)
+            xml_descriptors = {
+                "pointer_arrow_icon.xml": ("@drawable/pointer_arrow", "5dp", "5dp"),
+                "pointer_arrow_large_icon.xml": (
+                    "@drawable/pointer_arrow_large",
+                    "5dp",
+                    "5dp",
+                ),
+                "pointer_arrow_vector_icon.xml": (
+                    "@drawable/pointer_arrow",
+                    "5dp",
+                    "5dp",
+                ),
+                "pointer_arrow_large_vector_icon.xml": (
+                    "@drawable/pointer_arrow_large",
+                    "5dp",
+                    "5dp",
+                ),
+            }
+            for xml_name, (bitmap_ref, hx, hy) in xml_descriptors.items():
+                (drawable_dir / xml_name).write_text(
+                    f"""<?xml version="1.0" encoding="utf-8"?>
+<pointer-icon xmlns:android="http://schemas.android.com/apk/res/android"
+    android:bitmap="{bitmap_ref}"
+    android:hotSpotX="{hx}"
+    android:hotSpotY="{hy}" />
+"""
+                )
+
+            for folder_name, size in DENSITIES.items():
+                folder_path = res_dir / folder_name
+                folder_path.mkdir(parents=True, exist_ok=True)
+                resized = base_img.resize(size, Image.Resampling.LANCZOS)
+                resized.save(folder_path / "pointer_arrow.png", "PNG")
+                large_size = (int(size[0] * 1.5), int(size[1] * 1.5))
+                resized_large = base_img.resize(large_size, Image.Resampling.LANCZOS)
+                resized_large.save(folder_path / "pointer_arrow_large.png", "PNG")
+        else:
+            (xml_dir / "overlays.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
 <overlay xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Legacy Android (<= 14) Drawables & Pointer Icons -->
     <item target="drawable/pointer_spot_touch" value="@drawable/pointer_spot_touch" />
@@ -220,33 +297,33 @@ def build_rro(
 </overlay>
 """)
 
-        drawable_dir = res_dir / "drawable"
-        drawable_dir.mkdir(parents=True, exist_ok=True)
-        xml_descriptors = {
-            "pointer_spot_touch_icon.xml": "@drawable/pointer_spot_touch",
-            "pointer_spot_hover_icon.xml": "@drawable/pointer_spot_hover",
-            "pointer_spot_anchor_icon.xml": "@drawable/pointer_spot_anchor",
-            "pointer_spot_touch_vector_icon.xml": "@drawable/pointer_spot_touch",
-            "pointer_spot_hover_vector_icon.xml": "@drawable/pointer_spot_hover",
-            "pointer_spot_anchor_vector_icon.xml": "@drawable/pointer_spot_anchor",
-        }
-        for xml_name, bitmap_ref in xml_descriptors.items():
-            (drawable_dir / xml_name).write_text(
-                f"""<?xml version="1.0" encoding="utf-8"?>
+            drawable_dir = res_dir / "drawable"
+            drawable_dir.mkdir(parents=True, exist_ok=True)
+            xml_descriptors = {
+                "pointer_spot_touch_icon.xml": "@drawable/pointer_spot_touch",
+                "pointer_spot_hover_icon.xml": "@drawable/pointer_spot_hover",
+                "pointer_spot_anchor_icon.xml": "@drawable/pointer_spot_anchor",
+                "pointer_spot_touch_vector_icon.xml": "@drawable/pointer_spot_touch",
+                "pointer_spot_hover_vector_icon.xml": "@drawable/pointer_spot_hover",
+                "pointer_spot_anchor_vector_icon.xml": "@drawable/pointer_spot_anchor",
+            }
+            for xml_name, bitmap_ref in xml_descriptors.items():
+                (drawable_dir / xml_name).write_text(
+                    f"""<?xml version="1.0" encoding="utf-8"?>
 <pointer-icon xmlns:android="http://schemas.android.com/apk/res/android"
     android:bitmap="{bitmap_ref}"
     android:hotSpotX="12dp"
     android:hotSpotY="12dp" />
 """
-            )
+                )
 
-        for folder_name, size in DENSITIES.items():
-            folder_path = res_dir / folder_name
-            folder_path.mkdir(parents=True, exist_ok=True)
-            resized = base_img.resize(size, Image.Resampling.LANCZOS)
-            resized.save(folder_path / "pointer_spot_touch.png", "PNG")
-            resized.save(folder_path / "pointer_spot_hover.png", "PNG")
-            resized.save(folder_path / "pointer_spot_anchor.png", "PNG")
+            for folder_name, size in DENSITIES.items():
+                folder_path = res_dir / folder_name
+                folder_path.mkdir(parents=True, exist_ok=True)
+                resized = base_img.resize(size, Image.Resampling.LANCZOS)
+                resized.save(folder_path / "pointer_spot_touch.png", "PNG")
+                resized.save(folder_path / "pointer_spot_hover.png", "PNG")
+                resized.save(folder_path / "pointer_spot_anchor.png", "PNG")
 
         compiled_zip = Path(tmpdir) / "compiled.zip"
         subprocess.run(
@@ -345,8 +422,9 @@ def build_rro(
 def package_magisk_module(
     apk_path,
     output_zip,
-    module_id="pointer_replacer_rro",
-    module_name="Pointer Replacer RRO",
+    pointer_type="touch",
+    module_id=None,
+    module_name=None,
     pointer_name=None,
     author="thesandipv",
     version="v2.0",
@@ -355,8 +433,28 @@ def package_magisk_module(
     out_zip = Path(output_zip).resolve()
     out_zip.parent.mkdir(parents=True, exist_ok=True)
 
+    if module_id is None:
+        module_id = (
+            "pointer_replacer_rro_mouse"
+            if pointer_type == "mouse"
+            else "pointer_replacer_rro"
+        )
+
+    if module_name is None:
+        module_name = (
+            "Pointer Replacer RRO (Mouse)"
+            if pointer_type == "mouse"
+            else "Pointer Replacer RRO"
+        )
+
     display_name = (
-        f"Pointer Replacer RRO - {pointer_name}" if pointer_name else module_name
+        f"{module_name} - {pointer_name}" if pointer_name else module_name
+    )
+
+    desc = (
+        "Magisk Implementation of Mouse Pointer Replacer RRO Overlay"
+        if pointer_type == "mouse"
+        else "Magisk Implementation of Pointer Replacer RRO Overlay"
     )
 
     module_prop = f"""id={module_id}
@@ -364,13 +462,24 @@ name={display_name}
 version={version}
 versionCode={version_code}
 author={author}
-description=Magisk Implementation of Pointer Replacer RRO Overlay
+description={desc}
 """
 
-    customize_sh = """SKIPUNZIP=0
+    tip_msg = (
+        "TIP: Connect a mouse to see your new mouse cursor!"
+        if pointer_type == "mouse"
+        else "TIP: Enable Developer Options -> 'Show taps' to see your new touch pointer!"
+    )
+    title_msg = (
+        "*     Allusive Mouse RRO Overlay       *"
+        if pointer_type == "mouse"
+        else "*        Allusive RRO Overlay          *"
+    )
+
+    customize_sh = f"""SKIPUNZIP=0
 
 ui_print "****************************************"
-ui_print "*        Allusive RRO Overlay          *"
+ui_print "{title_msg}"
 ui_print "****************************************"
 ui_print "- Target: Android System Framework (android)"
 ui_print "- Installing RRO overlay to /system/product/overlay and /system/vendor/overlay"
@@ -380,9 +489,15 @@ set_perm_recursive "$MODPATH/system" 0 0 0755 0644
 
 ui_print "- Overlay deployed successfully."
 ui_print " "
-ui_print "TIP: Enable Developer Options -> 'Show taps' to see your new touch pointer!"
+ui_print "{tip_msg}"
 ui_print "****************************************"
 """
+
+    target_apk_name = (
+        "allusive_rro_mouse.apk"
+        if pointer_type == "mouse"
+        else "allusive_rro.apk"
+    )
 
     dummy_script = "#MAGISK\n"
     dummy_binary = "#!/system/bin/sh\n"
@@ -392,8 +507,8 @@ ui_print "****************************************"
         zf.writestr("customize.sh", customize_sh)
         zf.writestr("META-INF/com/google/android/updater-script", dummy_script)
         zf.writestr("META-INF/com/google/android/update-binary", dummy_binary)
-        zf.write(apk_path, "system/vendor/overlay/allusive_rro.apk")
-        zf.write(apk_path, "system/product/overlay/allusive_rro.apk")
+        zf.write(apk_path, f"system/vendor/overlay/{target_apk_name}")
+        zf.write(apk_path, f"system/product/overlay/{target_apk_name}")
 
     print(f"[✓] Magisk Module ZIP packaged: {out_zip}")
     return str(out_zip)
@@ -405,6 +520,13 @@ def main():
     )
     parser.add_argument(
         "--image", "-i", type=str, default=None, help="Path to pointer PNG image"
+    )
+    parser.add_argument(
+        "--pointer-type",
+        "--type",
+        choices=["touch", "mouse"],
+        default="touch",
+        help="Type of pointer overlay to build: touch (default) or mouse",
     )
     parser.add_argument(
         "--style",
@@ -427,8 +549,8 @@ def main():
         "--package",
         "-p",
         type=str,
-        default="com.afterroot.allusive_rro",
-        help="Overlay package name",
+        default=None,
+        help="Overlay package name (default: com.afterroot.allusive_rro or com.afterroot.allusive_rro_mouse)",
     )
     parser.add_argument(
         "--target",
@@ -441,7 +563,7 @@ def main():
         "--output",
         "-o",
         type=str,
-        default="build/allusive_rro.apk",
+        default=None,
         help="Output APK file path",
     )
     parser.add_argument(
@@ -454,7 +576,7 @@ def main():
     parser.add_argument(
         "--module-name",
         type=str,
-        default="Pointer Replacer RRO",
+        default=None,
         help="Magisk module display name",
     )
     parser.add_argument(
@@ -472,34 +594,44 @@ def main():
     )
     args = parser.parse_args()
 
+    default_output = (
+        "build/allusive_rro_mouse.apk"
+        if args.pointer_type == "mouse"
+        else "build/allusive_rro.apk"
+    )
+    output_apk = args.output or default_output
+
     if args.batch_dir:
         batch_dir = Path(args.batch_dir)
         if not batch_dir.is_dir():
             print(f"[!] Error: {args.batch_dir} is not a directory")
             sys.exit(1)
         out_dir = (
-            Path(args.output).parent
-            if args.output.endswith(".apk")
-            else Path(args.output)
+            Path(output_apk).parent
+            if output_apk.endswith(".apk")
+            else Path(output_apk)
         )
         out_dir.mkdir(parents=True, exist_ok=True)
         images = list(batch_dir.glob("*.png"))
         print(f"[*] Found {len(images)} images in {batch_dir}")
         for img_path in images:
-            apk_name = f"RRO_{img_path.stem}.apk"
+            prefix = "RRO_mouse" if args.pointer_type == "mouse" else "RRO"
+            apk_name = f"{prefix}_{img_path.stem}.apk"
             out_apk = out_dir / apk_name
             build_rro(
                 image_path=str(img_path),
+                pointer_type=args.pointer_type,
                 package_name=args.package,
                 target_package=args.target,
                 output_apk=str(out_apk),
                 priority=args.priority,
             )
             if args.magisk_zip:
-                zip_name = f"{img_path.stem}_Magisk.zip"
+                zip_name = f"{prefix}_{img_path.stem}.zip"
                 package_magisk_module(
                     str(out_apk),
                     str(out_dir / zip_name),
+                    pointer_type=args.pointer_type,
                     module_name=f"Pointer - {img_path.stem}",
                 )
     else:
@@ -507,15 +639,17 @@ def main():
             image_path=args.image,
             style=args.style,
             color=args.color,
+            pointer_type=args.pointer_type,
             package_name=args.package,
             target_package=args.target,
-            output_apk=args.output,
+            output_apk=output_apk,
             priority=args.priority,
         )
         if args.magisk_zip:
             package_magisk_module(
                 apk_path,
                 args.magisk_zip,
+                pointer_type=args.pointer_type,
                 module_name=args.module_name,
                 pointer_name=args.pointer_name,
             )

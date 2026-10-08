@@ -72,49 +72,47 @@ def load_pointer_names(cache_file="data/pointer_names.json"):
 
 
 def process_pointer(args_tuple):
-    img_path_str, rros_dir_str, modules_dir_str, pointer_name, force = args_tuple
+    img_path_str, rros_dir_str, modules_dir_str, pointer_name, force, pointer_type = args_tuple
     img_path = Path(img_path_str)
     rros_dir = Path(rros_dir_str)
     modules_dir = Path(modules_dir_str)
 
     stem = img_path.stem
-    apk_out = rros_dir / f"RRO_{stem}.apk"
-    zip_out = modules_dir / f"RRO_{stem}.zip"
-
-    apk_exists = apk_out.is_file()
-    zip_exists = zip_out.is_file()
-
-    if apk_exists and zip_exists and not force:
-        return stem, "SKIPPED", None
+    types_to_build = ["touch", "mouse"] if pointer_type == "both" else [pointer_type]
 
     try:
-        # Build RRO 2.0 APK
-        build_rro(
-            image_path=str(img_path),
-            package_name="com.afterroot.allusive_rro",
-            target_package="android",
-            output_apk=str(apk_out),
-            priority=99,
-        )
+        any_built = False
+        for ptype in types_to_build:
+            prefix = "RRO_mouse" if ptype == "mouse" else "RRO"
+            apk_out = rros_dir / f"{prefix}_{stem}.apk"
+            zip_out = modules_dir / f"{prefix}_{stem}.zip"
 
-        display_name = (
-            f"Pointer Replacer RRO - {pointer_name}"
-            if pointer_name
-            else f"Pointer Replacer RRO - {stem}"
-        )
+            if apk_out.is_file() and zip_out.is_file() and not force:
+                continue
 
-        # Package flashable Magisk Module ZIP with Firestore pointer name
-        package_magisk_module(
-            apk_path=str(apk_out),
-            output_zip=str(zip_out),
-            module_id="pointer_replacer_rro",
-            module_name=display_name,
-            pointer_name=pointer_name,
-            author="thesandipv",
-            version="v2.0",
-            version_code=2,
-        )
+            # Build RRO 2.0 APK
+            build_rro(
+                image_path=str(img_path),
+                pointer_type=ptype,
+                target_package="android",
+                output_apk=str(apk_out),
+                priority=99,
+            )
 
+            # Package flashable Magisk Module ZIP with Firestore pointer name
+            package_magisk_module(
+                apk_path=str(apk_out),
+                output_zip=str(zip_out),
+                pointer_type=ptype,
+                pointer_name=pointer_name,
+                author="thesandipv",
+                version="v2.0",
+                version_code=2,
+            )
+            any_built = True
+
+        if not any_built:
+            return stem, "SKIPPED", None
         return stem, "SUCCESS", None
     except Exception as exc:
         return stem, "FAILED", str(exc)
@@ -129,6 +127,13 @@ def main():
         type=str,
         default="repo/pointers",
         help="Directory containing source pointer images",
+    )
+    parser.add_argument(
+        "--pointer-type",
+        "--type",
+        choices=["touch", "mouse", "both"],
+        default="both",
+        help="Type of pointer overlay to migrate: touch, mouse, or both (default: both)",
     )
     parser.add_argument(
         "--rros-dir",
@@ -195,7 +200,7 @@ def main():
     print(f"[*] Found {total} pointer images in {pointers_dir}")
     print(f"[*] Compiling RRO 2.0 APKs to: {rros_dir}")
     print(f"[*] Packaging Magisk Module ZIPs to: {modules_dir}")
-    print(f"[*] Worker processes: {args.workers} | Force rebuild: {args.force}")
+    print(f"[*] Pointer type: {args.pointer_type} | Workers: {args.workers} | Force: {args.force}")
 
     tasks = [
         (
@@ -204,6 +209,7 @@ def main():
             str(modules_dir),
             pointer_names.get(img.stem) or pointer_names.get(img.name),
             args.force,
+            args.pointer_type,
         )
         for img in images
     ]

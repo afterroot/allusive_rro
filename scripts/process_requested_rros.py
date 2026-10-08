@@ -41,24 +41,43 @@ def buildRRO(pointerFile: str, pointerName: str = None, force: bool = False):
     stem = getFileName(pointerFile)
     out_apk = os.path.join(rrosDir, f"RRO_{stem}.apk")
     out_zip = os.path.join(modulesDir, f"RRO_{stem}.zip")
+    out_apk_mouse = os.path.join(rrosDir, f"RRO_mouse_{stem}.apk")
+    out_zip_mouse = os.path.join(modulesDir, f"RRO_mouse_{stem}.zip")
 
     os.makedirs(rrosDir, exist_ok=True)
     os.makedirs(modulesDir, exist_ok=True)
 
+    img_path = os.path.join(pointersDir, pointerFile)
+    built_any = False
+
     if not os.path.exists(out_apk) or not os.path.exists(out_zip) or force:
-        img_path = os.path.join(pointersDir, pointerFile)
-        print(f"Building RRO 2.0 Apk & Module ZIP for {pointerFile} ({pointerName or stem})... | Force: {force}")
-        build_rro(image_path=img_path, output_apk=out_apk)
+        print(f"Building Touch RRO 2.0 Apk & Module ZIP for {pointerFile} ({pointerName or stem})... | Force: {force}")
+        build_rro(image_path=img_path, output_apk=out_apk, pointer_type="touch")
         package_magisk_module(
             apk_path=out_apk,
             output_zip=out_zip,
+            pointer_type="touch",
             pointer_name=pointerName,
             module_name=f"Pointer Replacer RRO - {pointerName if pointerName else stem}",
         )
+        built_any = True
 
-        # add RRO apk and Magisk zip to git
+    if not os.path.exists(out_apk_mouse) or not os.path.exists(out_zip_mouse) or force:
+        print(f"Building Mouse RRO 2.0 Apk & Module ZIP for {pointerFile} ({pointerName or stem})... | Force: {force}")
+        build_rro(image_path=img_path, output_apk=out_apk_mouse, pointer_type="mouse")
+        package_magisk_module(
+            apk_path=out_apk_mouse,
+            output_zip=out_zip_mouse,
+            pointer_type="mouse",
+            pointer_name=pointerName,
+            module_name=f"Pointer Replacer RRO (Mouse) - {pointerName if pointerName else stem}",
+        )
+        built_any = True
+
+    if built_any:
+        # add RRO apks and Magisk zips to git
         os.chdir(repoDir)
-        os.system(f"git add {out_apk} {out_zip}")
+        os.system(f"git add {out_apk} {out_zip} {out_apk_mouse} {out_zip_mouse}")
         os.chdir(rootDir)
         return True
     else:
