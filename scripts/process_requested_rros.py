@@ -1,6 +1,8 @@
 import os
+import sys
 import json
 import shutil
+import subprocess
 from PIL import Image
 import firebase_admin
 from firebase_admin import credentials
@@ -28,17 +30,27 @@ def downloadPointer(pointerFile: str) -> bool:
     if os.path.exists(target_file):
         return True
 
-    print(f"Downloading {pointerFile}...")
-    ret = os.system(
-        f"gsutil cp gs://pointer-replacer.appspot.com/pointers/{pointerFile} {pointersDir}"
+    res = subprocess.run(
+        [
+            "gsutil",
+            "-q",
+            "cp",
+            f"gs://pointer-replacer.appspot.com/pointers/{pointerFile}",
+            pointersDir,
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
-    if ret != 0 or not os.path.exists(target_file):
+    if res.returncode != 0 or not os.path.exists(target_file):
         print(f"[!] Warning: Could not download {pointerFile} from Cloud Storage.")
         return False
 
-    os.chdir(repoDir)
-    os.system(f"git add {target_file}")
-    os.chdir(rootDir)
+    subprocess.run(
+        ["git", "add", target_file],
+        cwd=repoDir,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
     return True
 
 
@@ -64,34 +76,47 @@ def buildRRO(pointerFile: str, pointerName: str = None, force: bool = False):
     built_any = False
 
     if not os.path.exists(out_apk) or not os.path.exists(out_zip) or force:
-        print(f"Building Touch RRO 2.0 Apk & Module ZIP for {pointerFile} ({pointerName or stem})... | Force: {force}")
-        build_rro(image_path=img_path, output_apk=out_apk, pointer_type="touch")
+        build_rro(
+            image_path=img_path,
+            output_apk=out_apk,
+            pointer_type="touch",
+            verbose=False,
+        )
         package_magisk_module(
             apk_path=out_apk,
             output_zip=out_zip,
             pointer_type="touch",
             pointer_name=pointerName,
             module_name=f"Pointer Replacer RRO - {pointerName if pointerName else stem}",
+            verbose=False,
         )
         built_any = True
 
     if not os.path.exists(out_apk_mouse) or not os.path.exists(out_zip_mouse) or force:
-        print(f"Building Mouse RRO 2.0 Apk & Module ZIP for {pointerFile} ({pointerName or stem})... | Force: {force}")
-        build_rro(image_path=img_path, output_apk=out_apk_mouse, pointer_type="mouse")
+        build_rro(
+            image_path=img_path,
+            output_apk=out_apk_mouse,
+            pointer_type="mouse",
+            verbose=False,
+        )
         package_magisk_module(
             apk_path=out_apk_mouse,
             output_zip=out_zip_mouse,
             pointer_type="mouse",
             pointer_name=pointerName,
             module_name=f"Pointer Replacer RRO (Mouse) - {pointerName if pointerName else stem}",
+            verbose=False,
         )
         built_any = True
 
     if built_any:
         # add RRO apks and Magisk zips to git
-        os.chdir(repoDir)
-        os.system(f"git add {out_apk} {out_zip} {out_apk_mouse} {out_zip_mouse}")
-        os.chdir(rootDir)
+        subprocess.run(
+            ["git", "add", out_apk, out_zip, out_apk_mouse, out_zip_mouse],
+            cwd=repoDir,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
         return True
     else:
         return False
@@ -130,12 +155,21 @@ batch = db.batch()
 with open(os.path.join(rootDir, "data", "pointers.json"), "r") as f:
     pointers = json.load(f)
 
-for i in pointers["requests"]:
+# Filter open requests where isRequestClosed is False
+open_requests = [
+    req for req in pointers.get("requests", []) if not req.get("isRequestClosed", False)
+]
+print(f"[*] Processing {len(open_requests)} open request(s)...")
+
+if not open_requests:
+    print("No open requests to process. Exiting.")
+    sys.exit(0)
+
+for i in open_requests:
     pointerFile = i["fileName"]
     docId = i.get("documentId")
     forceBuild = i.get("force", False)
     exclude = i.get("exclude", False)
-    downloaded = False
 
     pointerName = None
     pointer_exists = True
@@ -146,38 +180,40 @@ for i in pointers["requests"]:
                 pointerName = doc_snap.to_dict().get("name")
             else:
                 pointer_exists = False
-                print(f"[!] Pointer document {docId} does not exist in Firestore (deleted).")
         except Exception as e:
-            print(f"Could not fetch pointer name for {docId}: {e}")
+            print(f"[!] Could not fetch pointer name for {docId}: {e}")
+
+    name_display = f" ({pointerName})" if pointerName else ""
 
     # Handle deleted pointers
     if not pointer_exists:
-        print(f"Skipping build for deleted pointer {docId} ({pointerFile}) and closing request.")
+        print(f"[!] Closed (deleted): {pointerFile}{name_display}")
         if docId:
             batch.update(
                 db.collection("requests").document(docId),
                 {"isRequestClosed": True, "status": "pointer_deleted"},
             )
-        index = pointers["requests"].index(i)
-        pointers["requests"][index]["isRequestClosed"] = True
+        i["isRequestClosed"] = True
         continue
 
     if not exclude:
         if not os.path.exists(os.path.join(pointersDir, pointerFile)):
             download_ok = downloadPointer(pointerFile)
-            downloaded = download_ok
         else:
             download_ok = True
 
         if download_ok:
-            isRROBuilt = buildRRO(pointerFile, pointerName=pointerName, force=forceBuild)
+            isRROBuilt = buildRRO(
+                pointerFile, pointerName=pointerName, force=forceBuild
+            )
+            if isRROBuilt:
+                print(f"[✓] Built: {pointerFile}{name_display}")
+            else:
+                print(f"[-] Up-to-date: {pointerFile}{name_display}")
         else:
-            isRROBuilt = False
-            print(f"[!] Skipping RRO build for {pointerFile} because image could not be downloaded.")
-
-        print(f"{pointerFile} ({pointerName or 'No Name'}) | Downloaded-{downloaded} | RRO Built-{isRROBuilt}")
+            print(f"[!] Failed download: {pointerFile}{name_display}")
     else:
-        print(f"{pointerFile} | Downloaded-Excluded | RRO Built-Excluded")
+        print(f"[-] Excluded: {pointerFile}{name_display}")
 
     hasRRO = os.path.exists(
         os.path.join(rrosDir, f"RRO_{getFileName(pointerFile)}.apk")
@@ -185,21 +221,16 @@ for i in pointers["requests"]:
         os.path.join(modulesDir, f"RRO_{getFileName(pointerFile)}.zip")
     )
 
-    if i.get("isRequestClosed") == False:
-        update_firestore(i.get("documentId"), hasRRO, pointer_exists=pointer_exists)
+    update_firestore(i.get("documentId"), hasRRO, pointer_exists=pointer_exists)
+    i["isRequestClosed"] = hasRRO
 
-    index = pointers["requests"].index(i)
-    pointers["requests"][index]["isRequestClosed"] = hasRRO
-
-print("Updating in Firestore...")
 try:
     batch.commit()
 except Exception as e:
     print(f"[!] Error committing batch to Firestore: {e}")
 
 # update pointers.json
-print("Updating pointers.json...")
 with open(os.path.join(rootDir, "data", "pointers.json"), "w") as f:
     json.dump(pointers, f, indent=2, sort_keys=True, separators=(",", ": "))
 
-print("Done!")
+print("Done.")

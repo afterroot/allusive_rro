@@ -169,6 +169,7 @@ def build_rro(
     keystore_pass="android",
     key_alias="androiddebugkey",
     key_pass="android",
+    verbose=True,
 ):
     aapt2, zipalign, apksigner, android_jar = find_android_tools()
 
@@ -186,15 +187,18 @@ def build_rro(
             else "build/allusive_rro.apk"
         )
 
-    print(f"[*] Building RRO APK ({pointer_type}): {output_apk}")
-    print(f"    - Overlay Package: {package_name}")
-    print(f"    - Target Package:  {target_package}")
+    if verbose:
+        print(f"[*] Building RRO APK ({pointer_type}): {output_apk}")
+        print(f"    - Overlay Package: {package_name}")
+        print(f"    - Target Package:  {target_package}")
 
     if image_path and os.path.isfile(image_path):
-        print(f"    - Input Image:     {image_path}")
+        if verbose:
+            print(f"    - Input Image:     {image_path}")
         base_img = Image.open(image_path).convert("RGBA")
     else:
-        print(f"    - Preset Style:    {style}")
+        if verbose:
+            print(f"    - Preset Style:    {style}")
         base_img = create_preset_image(style=style, color_hex=color)
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -415,7 +419,8 @@ def build_rro(
             stdout=subprocess.DEVNULL,
         )
 
-    print(f"[✓] RRO APK built: {out_path}")
+    if verbose:
+        print(f"[✓] RRO APK built: {out_path}")
     return str(out_path)
 
 
@@ -429,6 +434,7 @@ def package_magisk_module(
     author="thesandipv",
     version="v2.0",
     version_code=2,
+    verbose=True,
 ):
     out_zip = Path(output_zip).resolve()
     out_zip.parent.mkdir(parents=True, exist_ok=True)
@@ -510,7 +516,8 @@ ui_print "****************************************"
         zf.write(apk_path, f"system/vendor/overlay/{target_apk_name}")
         zf.write(apk_path, f"system/product/overlay/{target_apk_name}")
 
-    print(f"[✓] Magisk Module ZIP packaged: {out_zip}")
+    if verbose:
+        print(f"[✓] Magisk Module ZIP packaged: {out_zip}")
     return str(out_zip)
 
 
