@@ -97,6 +97,7 @@ def process_pointer(args_tuple):
                 target_package="android",
                 output_apk=str(apk_out),
                 priority=99,
+                verbose=False,
             )
 
             # Package flashable Magisk Module ZIP with Firestore pointer name
@@ -108,6 +109,7 @@ def process_pointer(args_tuple):
                 author="thesandipv",
                 version="v2.0",
                 version_code=2,
+                verbose=False,
             )
             any_built = True
 
