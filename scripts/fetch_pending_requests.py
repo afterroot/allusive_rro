@@ -33,7 +33,20 @@ query_open_requests = requestsRef.where("isRequestClosed", "==", False).stream()
 requests = []
 for doc in query_open_requests:
     doc_dict = doc.to_dict()
-    # convert timestapmp to string
+    doc_id = doc_dict.get("documentId") or doc.id
+
+    # Verify that the referenced pointer exists in Firestore
+    if doc_id:
+        try:
+            pointer_doc = db.collection("pointers").document(doc_id).get()
+            if not pointer_doc.exists:
+                print(f"[!] Pointer {doc_id} was deleted in Firestore. Closing orphan request {doc.id}...")
+                doc.reference.update({"isRequestClosed": True, "status": "pointer_deleted"})
+                continue
+        except Exception as e:
+            print(f"[!] Error verifying pointer {doc_id}: {e}")
+
+    # convert timestamp to string
     doc_dict["timestamp"] = doc_dict["timestamp"].__str__()
     pointers["requests"].append(doc_dict)
     requests.append(doc_dict)

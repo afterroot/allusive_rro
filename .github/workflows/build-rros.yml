@@ -93,7 +93,7 @@ jobs:
           git checkout main
           git add pointers rros modules
           echo "commit to allusive-repo"
-          git commit -m "Generated RRO Apks and Magisk Module Zips"
+          git diff-index --quiet HEAD || git commit -m "Generated RRO Apks and Magisk Module Zips"
 
       - name: Commit to allusive_rro
         if: ${{ 'success' == steps.fetch-pending-requests.outcome }}
@@ -101,7 +101,7 @@ jobs:
         run: |
           git add repo data/pointers.json
           echo "commit to allusive_rro"
-          git commit -m "update request status in pointers.json"
+          git diff-index --quiet HEAD || git commit -m "update request status in pointers.json"
 
       - name: Push changes to allusive-repo
         if: ${{ 'success' == steps.fetch-pending-requests.outcome }}
