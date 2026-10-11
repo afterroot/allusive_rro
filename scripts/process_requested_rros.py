@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import shutil
 from PIL import Image
@@ -130,7 +131,17 @@ batch = db.batch()
 with open(os.path.join(rootDir, "data", "pointers.json"), "r") as f:
     pointers = json.load(f)
 
-for i in pointers["requests"]:
+# Filter open requests where isRequestClosed is False
+open_requests = [
+    req for req in pointers.get("requests", []) if not req.get("isRequestClosed", False)
+]
+print(f"[*] Found {len(open_requests)} open request(s) to process.")
+
+if not open_requests:
+    print("No open requests to process. Exiting.")
+    sys.exit(0)
+
+for i in open_requests:
     pointerFile = i["fileName"]
     docId = i.get("documentId")
     forceBuild = i.get("force", False)
@@ -158,8 +169,7 @@ for i in pointers["requests"]:
                 db.collection("requests").document(docId),
                 {"isRequestClosed": True, "status": "pointer_deleted"},
             )
-        index = pointers["requests"].index(i)
-        pointers["requests"][index]["isRequestClosed"] = True
+        i["isRequestClosed"] = True
         continue
 
     if not exclude:
@@ -185,11 +195,8 @@ for i in pointers["requests"]:
         os.path.join(modulesDir, f"RRO_{getFileName(pointerFile)}.zip")
     )
 
-    if i.get("isRequestClosed") == False:
-        update_firestore(i.get("documentId"), hasRRO, pointer_exists=pointer_exists)
-
-    index = pointers["requests"].index(i)
-    pointers["requests"][index]["isRequestClosed"] = hasRRO
+    update_firestore(i.get("documentId"), hasRRO, pointer_exists=pointer_exists)
+    i["isRequestClosed"] = hasRRO
 
 print("Updating in Firestore...")
 try:
